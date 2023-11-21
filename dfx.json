@@ -2,6 +2,9 @@
   "canisters": {
     "dip721_nft_container": {
       "main": "src/Main.mo"
+    },
+    "favourse_crypto_party": {
+      "main": "src/Main.mo"
     }
   }
 }
