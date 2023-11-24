@@ -20,8 +20,6 @@ shared actor class Dip721NFT(custodian : Principal, init : Types.Dip721NonFungib
   stable var maxLimit : Nat16 = init.maxLimit;
   stable var startDateTime : Text = init.startDateTime;
   stable var endDateTime : Text = init.endDateTime;
-  // stable var endDate : Text = init.endDate;
-  // stable var endTime : Text = init.endTime;
   stable var location : Text = init.location;
   stable var description : Text = init.description;
   stable var price : Nat64 = init.price;

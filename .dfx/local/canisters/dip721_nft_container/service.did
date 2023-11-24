@@ -17,8 +17,15 @@ type Dip721NFT = service {
 };
 type Dip721NonFungibleToken = record {
   maxLimit : nat16;
+  isInPerson : bool;
   logo : LogoResult;
   name : text;
+  description : text;
+  isFree : bool;
+  endDateTime : text;
+  price : nat64;
+  startDateTime : text;
+  location : text;
   symbol : text;
 };
 type ExtendedMetadataResult = variant {

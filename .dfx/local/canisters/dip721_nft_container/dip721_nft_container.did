@@ -74,9 +74,16 @@ type ExtendedMetadataResult =
  };
 type Dip721NonFungibleToken = 
  record {
+   description: text;
+   endDateTime: text;
+   isFree: bool;
+   isInPerson: bool;
+   location: text;
    logo: LogoResult;
    maxLimit: nat16;
    name: text;
+   price: nat64;
+   startDateTime: text;
    symbol: text;
  };
 type Dip721NFT = 

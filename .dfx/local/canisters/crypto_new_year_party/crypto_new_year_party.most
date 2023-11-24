@@ -19,10 +19,17 @@ type Nft = {id : TokenId; metadata : MetadataDesc; owner : Principal};
 type TokenId = Nat64;
 actor {
   stable var custodians : ?(Principal, List<Principal>);
+  stable var description : Text;
+  stable var endDateTime : Text;
+  stable var isFree : Bool;
+  stable var isInPerson : Bool;
+  stable var location : Text;
   stable var logo : {data : Text; logo_type : Text};
   stable var maxLimit : Nat16;
   stable var name : Text;
   stable var nfts : ?(Nft, List<Nft>);
+  stable var price : Nat64;
+  stable var startDateTime : Text;
   stable var symbol : Text;
   stable var transactionId : Nat
 };

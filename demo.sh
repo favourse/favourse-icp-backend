@@ -1,46 +1,76 @@
 #!/usr/bin/env bash
+
+NAME=$1
+LOGO=$2
+SYMBOL=$3
+MAXLIMIT=$4
+STARTDATETIME=$5
+ENDDATETIME=$6
+LOCATION=$7
+DESCRIPTION=$8
+PRICE=$9
+ISINPERSON=$10
+ISFREE=$11
+PRINCIPAL=$12
+LOGOTYPE=$13
+CANISTERNAME=$14
+RECEIVERPRINCIPAL=$15
+
+
 dfx stop
 set -e
 trap 'dfx stop' EXIT
 
+echo "Adding $NAME canister to dfx.json..."
+cat dfx.json | jq --arg name "$NAME" '.canisters += {($name): {"main": "src/token.mo"}}' > dfx.tmp
+mv dfx.tmp dfx.json
+
+
 dfx start --background --clean
 dfx identity new alice --disable-encryption || true
-ALICE=$(dfx --identity alice identity get-principal)
+# ALICE=$(dfx --identity alice identity get-principal)
 dfx identity new bob --disable-encryption || true
-BOB=$(dfx --identity bob identity get-principal)
+# BOB=$(dfx --identity bob identity get-principal)
 
 dfx deploy --argument "(
-  principal\"$(dfx identity get-principal)\", 
+  principal\"$PRINCIPAL\", 
   record {
     logo = record {
-      logo_type = \"image/png\";
-      data = \"\";
+      logo_type = \"$LOGOTYPE\";
+      data = \"$LOGO\";
     };
-    name = \"My DIP721\";
-    symbol = \"DFXB\";
-    maxLimit = 10;
+    name = \"$NAME\"; 
+    symbol = \"$SYMBOL\"; 
+    maxLimit = $MAXLIMIT; 
+    startDateTime = \"$STARTDATETIME\"; 
+    endDateTime = \"$ENDDATETIME\"; 
+    location = \"$LOCATION\"; 
+    description = \"$DESCRIPTION\"; 
+    price = $PRICE;
+    isInPerson = $ISINPERSON; 
+    isFree = $ISFREE;
   }
-)" dip721_nft_container
+)" $CANISTERNAME
 
-dfx canister call dip721_nft_container mintDip721 \
+dfx canister call $CANISTERNAME mintDip721 \
 "(
-  principal\"$(dfx identity get-principal)\", 
+  principal\"$PRINCIPAL\", 
   vec { 
     record {
       purpose = variant{Rendered};
-      data = blob\"hello\";
+      data = blob\"$NAME\";
       key_val_data = vec {
-        record { key = \"description\"; val = variant{TextContent=\"The NFT metadata can hold arbitrary metadata\"}; };
-        record { key = \"tag\"; val = variant{TextContent=\"anime\"}; };
-        record { key = \"contentType\"; val = variant{TextContent=\"text/plain\"}; };
-        record { key = \"locationType\"; val = variant{Nat8Content=4:nat8} };
+        record { key = \"startDateTime\"; val = variant{TextContent=\"$STARTDATETIME\"}; };
+        record { key = \"endDateTime\"; val = variant{TextContent=\"$ENDDATETIME\"}; };
+        record { key = \"location\"; val = variant{TextContent=\"$LOCATION\"}; };
+        record { key = \"name\"; val = variant{TextContent=\"$NAME\"}; };
       }
     }
   }
 )"
 
-dfx canister call dip721_nft_container transferFromDip721 "(principal\"$(dfx identity get-principal)\", principal\"$ALICE\", 0)"
-dfx canister call dip721_nft_container safeTransferFromDip721 "(principal\"$ALICE\", principal\"$(dfx identity get-principal)\", 0)"
-dfx canister call dip721_nft_container balanceOfDip721 "(principal\"$(dfx identity get-principal)\")"
+dfx canister call dip721_nft_container transferFromDip721 "(principal\"$PRINCIPAl\", principal\"$RECEIVERPRINCIPAL\", 0)"
+dfx canister call dip721_nft_container safeTransferFromDip721 "(principal\"$RECEIVERPRINCIPAL\", principal\"$PRINCIPAl\", 0)"
+dfx canister call dip721_nft_container balanceOfDip721 "(principal\"$PRINCIPAl\")"
 
 echo "DONE"
