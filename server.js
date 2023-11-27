@@ -36,7 +36,7 @@ app.post("/deploy", (req, res) => {
   const firstThreeChars = name.substring(0, 3).toUpperCase();
 
   // Update dfx.json with the new canister
-  const dfxJsonPath = path.join(__dirname, "../favourse-icp-backend/dfx.json"); // Update this path as needed
+  const dfxJsonPath = path.join(__dirname, "./dfx.json"); // Update this path as needed
   fs.readFile(dfxJsonPath, "utf8", (err, data) => {
     if (err) {
       return res.status(500).send("Error reading dfx.json");
@@ -100,7 +100,7 @@ app.post("/deploy", (req, res) => {
 
         exec(
           deployCommand,
-          { cwd: "../favourse-icp-backend", maxBuffer: 1024 * 500 },
+          { maxBuffer: 1024 * 500 },
           (deployError, deployStdout, deployStderr) => {
             if (deployError) {
               console.error(`exec error: ${deployError}`);
@@ -126,32 +126,28 @@ app.post("/deploy", (req, res) => {
               });
             } else {
               // If we did not find the URL, we assume the canister ID needs to be retrieved separately
-              exec(
-                getCanisterIdCommand,
-                { cwd: "../favourse-icp-backend" },
-                (idError, idStdout, idStderr) => {
-                  if (idError) {
-                    console.error(`exec error: ${idError}`);
-                    return res.status(500).json({
-                      error: `Failed to get canister ID: ${idStderr}`,
-                    });
-                  }
-
-                  // Extract the canister ID from the getCanisterIdCommand output
-                  const canisterId = idStdout.trim(); // Assuming the output is just the canister ID
-
-                  res.json({
-                    message: "Deployment Successful",
-                    deployOutput: deployStdout,
-                    canisterId: canisterId,
-                    principalId: principalId,
-                    logoType: logoType,
-                    logoData: logoData,
-                    symbol: firstThreeChars,
-                    canisterName: canisterName, // This will now contain the canister ID
+              exec(getCanisterIdCommand, (idError, idStdout, idStderr) => {
+                if (idError) {
+                  console.error(`exec error: ${idError}`);
+                  return res.status(500).json({
+                    error: `Failed to get canister ID: ${idStderr}`,
                   });
                 }
-              );
+
+                // Extract the canister ID from the getCanisterIdCommand output
+                const canisterId = idStdout.trim(); // Assuming the output is just the canister ID
+
+                res.json({
+                  message: "Deployment Successful",
+                  deployOutput: deployStdout,
+                  canisterId: canisterId,
+                  principalId: principalId,
+                  logoType: logoType,
+                  logoData: logoData,
+                  symbol: firstThreeChars,
+                  canisterName: canisterName, // This will now contain the canister ID
+                });
+              });
             }
           }
         );
@@ -165,54 +161,93 @@ app.post("/mint-nft", (req, res) => {
   const {
     principalId,
     canisterName,
-    canisterId,
     name,
     location,
     startDateTime,
     endDateData,
     logoData,
+    principalReceiver,
   } = req.body;
 
-  const keyValData = [
-    { key: "name", val: `TextContent=\\"${name}\\"` },
-    { key: "canisterId", val: `TextContent=\\"${canisterId}\\"` },
-    { key: "location", val: `TextContent=\\"${location}\\"` },
-    { key: "startDateTime", val: `TextContent=\\"${startDateTime}\\"` },
-    { key: "endDateData", val: `TextContent=\\"${endDateData}\\"` },
-    { key: "logoData", val: `TextContent=\\"${logoData}\\"` },
-  ];
-
-  // Serialize keyValData to the expected string format for the DFX command
-  const serializedKeyValData = keyValData
-    .map(
-      ({ key, val }) => `record { key = \\"${key}\\"; val = variant{${val}}; }`
-    )
-    .join("; ");
-
   // Append " NFT Ticket" to the name and convert to hex blob for the data field
-  const eventData = `${name} NFT Ticket`;
   // const eventDataHex = Buffer.from(eventData).toString("hex");
 
   // Construct the argument for the mint command using the serialized key_val_data
-  const mintArgument = `"(principal\\"${principalId}\\", vec { record { purpose = variant{Rendered}; data = blob\\"${eventData}\\"; key_val_data = vec { ${serializedKeyValData} }; } })"`;
+  const mintCommand = `dfx canister call ${canisterName} mintDip721 '(
+  principal "'${principalId}'", 
+  vec { 
+    record {
+      purpose = variant{Rendered};
+      data = blob"${name} NFT Ticket";
+      key_val_data = vec {
+        record { key = "startDateTime"; val = variant{TextContent="${startDateTime}"}; };
+        record { key = "endDateTime"; val = variant{TextContent="${endDateData}"}; };
+        record { key = "LogoData"; val = variant{TextContent="${logoData}"}; };
+        record { key = "location"; val = variant{TextContent="${location}"}; };
+        record { key = "name"; val = variant{TextContent="${name}"}; };
+      }
+    }
+  }
+)'`;
 
   // Construct the full mint command
-  const mintCommand = `dfx canister call ${canisterName} mintDip721\\ ${mintArgument}`;
+  // const mintCommand = `dfx canister call ${canisterName} mintDip721\\ ${mintArgument}`;
 
   // Execute the mint command
-  exec(
-    mintCommand,
-    { cwd: "../favourse-icp-backend", maxBuffer: 1024 * 500 },
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error minting NFT: ${error}`);
-        return res.status(500).send(`Error minting NFT: ${stderr}`);
-      }
-      // Process and send the successful response
-      console.log(`NFT minted: ${stdout}`);
-      res.status(200).send(`NFT minted successfully: ${stdout}`);
+  exec(mintCommand, { maxBuffer: 1024 * 500 }, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error minting NFT: ${error}`);
+      return res.status(500).send(`Error minting NFT: ${stderr}`);
     }
-  );
+    // Extract token_id from stdout
+    const match = stdout.match(/token_id = (\d+)/);
+    if (match && match[1]) {
+      const tokenId = match[1]; // This is your token ID
+
+      // Check if principalId and principalReceiver are different
+      if (principalId !== principalReceiver) {
+        // Construct the transfer command
+        const transferCommand = `dfx canister call ${canisterName} safeTransferFromDip721 '(
+          principal "${principalId}",
+          principal "${principalReceiver}",
+          ${tokenId}
+        )'`;
+
+        // Execute the transfer command
+        exec(
+          transferCommand,
+          { maxBuffer: 1024 * 500 },
+          (transferError, transferStdout, transferStderr) => {
+            if (transferError) {
+              console.error(`Error transferring NFT: ${transferError}`);
+              return res
+                .status(500)
+                .send(`Error transferring NFT: ${transferStderr}`);
+            }
+            console.log(
+              `NFT transferred: ${transferStdout} tokenID ${tokenId}`
+            );
+            res
+              .status(200)
+              .send(
+                `NFT minted and transferred successfully with token ID: ${tokenId}`
+              );
+          }
+        );
+      } else {
+        // If the principals are the same, no need to transfer
+        console.log(`NFT minted with token ID: ${tokenId}`);
+        res
+          .status(200)
+          .send(`NFT minted successfully with token ID: ${tokenId}`);
+      }
+    } else {
+      console.error("Token ID could not be extracted from the output.");
+      res
+        .status(500)
+        .send("Error minting NFT: Token ID could not be extracted.");
+    }
+  });
 });
 
 const PORT = process.env.PORT || 3040;

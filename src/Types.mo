@@ -15,10 +15,6 @@ module {
     maxLimit : Nat16;
     startDateTime : Text;
     endDateTime : Text;
-    // startDate : Text;
-    // startTime : Text;
-    // endDate : Text;
-    // endTime : Text;
     location : Text;
     price : Nat64;
     isInPerson : Bool;

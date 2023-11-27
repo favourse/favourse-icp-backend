@@ -1,24 +1,15 @@
 {
   "canisters": {
-    "test_nama_event_baru": {
+    "favourse_party": {
       "main": "src/Main.mo"
     },
-    "gede_event": {
+    "favourse_test_event": {
       "main": "src/Main.mo"
     },
-    "event_testo": {
+    "bubu": {
       "main": "src/Main.mo"
     },
-    "crypto_new_year_party": {
-      "main": "src/Main.mo"
-    },
-    "favourse_swipe_event": {
-      "main": "src/Main.mo"
-    },
-    "dip721_nft_container": {
-      "main": "src/Main.mo"
-    },
-    "icp_event_party": {
+    "jeje": {
       "main": "src/Main.mo"
     }
   }
