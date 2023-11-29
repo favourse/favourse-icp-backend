@@ -11,6 +11,27 @@
     },
     "jeje": {
       "main": "src/Main.mo"
+    },
+    "icp_party": {
+      "main": "src/Main.mo"
+    },
+    "testo": {
+      "main": "src/Main.mo"
+    },
+    "juju": {
+      "main": "src/Main.mo"
+    },
+    "favourse_test_event_2": {
+      "main": "src/Main.mo"
+    },
+    "asia_blockchain_festival": {
+      "main": "src/Main.mo"
+    },
+    "kenran_evenr": {
+      "main": "src/Main.mo"
+    },
+    "test_event": {
+      "main": "src/Main.mo"
     }
   }
 }
